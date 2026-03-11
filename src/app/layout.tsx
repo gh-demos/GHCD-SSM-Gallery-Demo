@@ -27,7 +27,7 @@ export default function RootLayout({
         {/* Anti-FOUC: apply dark class before first paint based on stored preference or system setting */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var t=localStorage.getItem('theme');var d=window.matchMedia('(prefers-color-scheme: dark)').matches;if(t==='dark'||(t!=='light'&&d)){document.documentElement.classList.add('dark');}}catch(e){}})();`,
+            __html: `(function(){try{var t=localStorage.getItem('theme');var valid=t==='light'||t==='dark'||t==='system';if(!valid){t=null;}var d=window.matchMedia('(prefers-color-scheme: dark)').matches;var shouldUseDark=t==='dark'||((!t||t==='system')&&d);if(shouldUseDark){document.documentElement.classList.add('dark');}}catch(e){}})();`,
           }}
         />
       </head>

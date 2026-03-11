@@ -15,14 +15,30 @@ const ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>('system');
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+      if (document.documentElement.classList.contains('dark')) {
+        return 'dark';
+      }
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        return 'dark';
+      }
+    }
+    return 'light';
+  });
 
   // Load persisted theme on mount
   useEffect(() => {
-    const stored = localStorage.getItem('theme') as Theme | null;
-    const initial = stored || 'system';
-    setThemeState(initial);
-    applyTheme(initial);
+    try {
+      const stored = localStorage.getItem('theme');
+      const isValidStoredTheme =
+        stored === 'light' || stored === 'dark' || stored === 'system';
+      const initial: Theme = isValidStoredTheme ? stored : 'system';
+      setThemeState(initial);
+      applyTheme(initial);
+    } catch {
+      applyTheme('system');
+    }
   }, []);
 
   // Listen for system preference changes when theme is 'system'
@@ -50,7 +66,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   function setTheme(newTheme: Theme) {
     setThemeState(newTheme);
-    localStorage.setItem('theme', newTheme);
+    try {
+      localStorage.setItem('theme', newTheme);
+    } catch {
+      // Ignore persistence errors so theme switching still works in-memory
+    }
     applyTheme(newTheme);
   }
 
